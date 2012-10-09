@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<book xmlns="http://docbook.org/ns/docbook"
+      xml:id="Kerberos-Guide" version="5.0">
+
+  <info>
+    <title>Linux Guide to Configuring Kerberos</title>
+    
+    <abstract>
+      <title>Introduction</title>
+      
+      <para>
+	I decided to compile thi
