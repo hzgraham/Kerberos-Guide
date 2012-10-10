@@ -1,0 +1,98 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Guide to Configure Kerberos</title><link rel="stylesheet" type="text/css" href="./lnx-docbook-stylesheet.css"><meta name="generator" content="DocBook XSL-NS Stylesheets V1.76.1"><meta name="description" content="Introduction I wanted to write this because in my search for information on the subject of Kerberos, I was probably as confused as you."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="Guide to Configure Kerberos"><div class="titlepage"><div><div><h1 class="title"><a name="Kerberos-Guide"></a>Guide to Configure Kerberos</h1></div><div><h2 class="subtitle">From the basics to the advanced.</h2></div><div><div class="authorgroup"><div class="author"><h3 class="author"><span class="firstname">Henry</span> <span class="surname">Graham</span></h3><code class="email">&lt;<a class="email" href="mailto:hzgraham@gmail.com">hzgraham@gmail.com</a>&gt;</code></div></div></div><div><p class="copyright">Copyright © 2012 Henry Graham</p></div><div><div class="legalnotice" title="Legal Notice"><a name="idm26224"></a><p>
+	This work is licensed under the Creative Commons Attribution
+	3.0 United States License. To view a copy of this license,
+	visit <a class="link" href="http://creativecommons.org/licenses/by/3.0/us/" target="_top">http://creativecommons.org/licenses/by/3.0/us/</a> or
+	send a letter to Creative Commons, 171 Second Street, Suite
+	300, San Francisco, California, 94105, USA.
+      </p><p>
+        You can view the latest DocBook 5 XML source to this guide
+        under version control on the web at <a class="link" href="http://github.com/tbielawa/Virtual-Disk-Guide" target="_top">http://github.com/tbielawa/Virtual-Disk-Guide</a> and
+        an HTML compiled version under <a class="link" href="http://lnx.cx/docs/vdg/" target="_top">http://lnx.cx/docs/vdg/</a>.
+      </p></div></div><div><div class="abstract" title="Introduction"><p class="title"><b>Introduction</b></p><p>
+	I wanted to write this because in my search for information on
+	the subject of Kerberos, I was probably as confused as you.
+      </p></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#Kerberos-Configuration">1. Kerberos Configuration</a></span></dt><dd><dl><dt><span class="section"><a href="#Kerberos">1. Introduction</a></span></dt><dt><span class="section"><a href="#provisioning-a-kerberos-server">2. Installing and Configuring a Kerberos Server</a></span></dt></dl></dd></dl></div><div class="list-of-examples"><p><b>List of Examples</b></p><dl><dt>1.1. <a href="#VDG-Cookbook-Example-Query-an-Image">Querying an Image</a></dt></dl></div><div class="chapter" title="Chapter 1. Kerberos Configuration"><div class="titlepage"><div><div><h2 class="title"><a name="Kerberos-Configuration"></a>Chapter 1. Kerberos Configuration</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#Kerberos">1. Introduction</a></span></dt><dt><span class="section"><a href="#provisioning-a-kerberos-server">2. Installing and Configuring a Kerberos Server</a></span></dt></dl></div><div class="section" title="1. Introduction"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="Kerberos"></a>1. Introduction</h2></div></div></div><p>
+      This chapter will cover basic descriptions and configurations
+      for a Kerberos server and its respective clients for various
+      services.
+    </p></div><div class="section" title="2. Installing and Configuring a Kerberos Server"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="provisioning-a-kerberos-server"></a>2. Installing and Configuring a Kerberos Server</h2></div></div></div><p>
+    This chapter is going to provide basic descriptions and installation
+    instructions for setting up a Kerberos server on Ubuntu Linux. You will 
+    need to be able to run <span class="command"><strong>sudo apt-get install</strong></span> to install
+    the required packages.
+  </p><p>
+    The following are a list of packages that will be required when 
+    setting up a Kerberos server.
+      </p><div class="orderedlist"><ol class="orderedlist" type="1"><li class="listitem">
+	krb5-kdc
+      </li><li class="listitem">
+	krb5-admin-server
+      </li><li class="listitem">
+	rng-tools
+      </li></ol></div><p>
+    Now, install 
+  </p><div class="example"><a name="VDG-Cookbook-Example-Query-an-Image"></a><p class="title"><b>Example 1.1. Querying an Image</b></p><div class="example-contents"><pre class="screen">tbielawa@deepfryer:/srv/images$ ls -lhs
+total 136K
+136K -rw-r-----. 1 tbielawa tbielawa 256K May  8 18:00 image-qcow.qcow2
+   0 -rw-r-----. 1 tbielawa tbielawa  10G May  8 18:00 image-raw.raw
+
+tbielawa@deepfryer:/srv/images$ file image-qcow.qcow2 image-raw.raw
+image-qcow.qcow2: Qemu Image, Format: Qcow , Version: 2
+image-raw.raw:    data
+
+tbielawa@deepfryer:/srv/images$ qemu-img info image-qcow.qcow2
+image: image-qcow.qcow2
+file format: qcow2
+virtual size: 10G (10737418240 bytes)
+disk size: 136K
+cluster_size: 65536
+
+tbielawa@deepfryer:/srv/images$ qemu-img info image-raw.raw
+image: image-raw.raw
+file format: raw
+virtual size: 10G (10737418240 bytes)
+disk size: 0</pre></div></div><br class="example-break"><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+      These images are freshly created and don't have any information
+      on them yet. Both were created to be 10G images.
+    </p></div><p>
+    The interesting information we can get from using <span class="command"><strong>ls
+    -lhs</strong></span> is how the files are actually
+    sized. <code class="filename">image-raw.raw</code> appears to be 10G but
+    doesn't have any actual blocks allocated to it yet. It is
+    literally an empty file. What's good about these RAW disks is that
+    you don't need any special kind of tools to know how large the
+    disk is internally. The RAW image should always match it's
+    reported file size on the host OS.
+  </p><p>
+    Our QCOW, on the other hand, is being deceptive and concealing
+    it's true size. QCOWs will grow to their maximum size over
+    time. What makes it different from our RAW image in this case is
+    that it already has blocks allocated to it (that information is in
+    the left-most column and comes from the <code class="option">-s</code> flag
+    to <span class="command"><strong>ls</strong></span>). The allocated space is overhead from
+    the meta-data associated with the QCOW image format.
+  </p><p>
+    The <span class="command"><strong>file</strong></span> command tells us immediately what it
+    thinks each file is. This is another simple to perform query that
+    you can run from any system without special tools. Here we see it
+    correctly recports <code class="filename">image-qcow.qcow2</code>s
+    type. Unfortunately, without any content, all it can tell us about
+    <code class="filename">image-raw.raw</code> is that it's 'data'.
+  </p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+      Its worth mentioning that RAW image types will be reported by
+      <span class="command"><strong>file</strong></span> as "x86 boot sector, code offset 0xb8"
+      once given a filesystem label and a partition table.
+    </p></div><p>
+    Using the <span class="command"><strong>qemu-img</strong></span> command we can get more
+    detailed information about the disk images in a clearly presented
+    format.
+  </p><p>
+    With <span class="command"><strong>qemu-img</strong></span> it's clear that
+    <code class="filename">image-qcow.qcow2</code> is a QCOW2 type image and is
+    only 136K on disk and internally (the 'virtual size' field) is a
+    10G disk image. If the QCOW had a backing image the path to that
+    file would be shown here as an additional field.
+  </p><p>
+    For the RAW image there is no new information here that we didn't
+    already get from the <span class="command"><strong>ls</strong></span>.
+  </p></div></div></div></body></html>

@@ -9,7 +9,7 @@
 # CHUNKDIR - Destination for chunked HTML transformations
 # OUTPUT - "Path/Name" of generated (non-chunked) documents.
 ##################################################################
-INPUT = Virtual-Disk-Operations
+INPUT = Kerberos-Guide
 OUTPUT = $(INPUT)
 DEST = output
 CHUNKDIR = html
@@ -25,10 +25,10 @@ OUTFILE = $(DEST)/$(OUTPUT)
 # HTML_CHUNKED_xsl - Stylesheet for Chunked HTML transformations
 ##################################################################
 # Fedora - Package: docbook5-style-xsl
-STYLEDIR = /usr/share/xml/docbook/stylesheet/docbook-xsl-ns/
+#STYLEDIR = /usr/share/sgml/docbook/xsl-ns-stylesheets/
 
 # Ubuntu - Package: docbook-xsl-ns
-# STYLEDIR = /usr/share/xml/docbook/stylesheet/docbook-xsl-ns/
+STYLEDIR = /usr/share/xml/docbook/stylesheet/docbook-xsl-ns/
 
 # OS X - Package (Macports): docbook-xsl
 # STYLEDIR = /opt/local/share/xsl/docbook-xsl

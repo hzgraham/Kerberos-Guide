@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <book xmlns="http://docbook.org/ns/docbook"
-  xmlns:xi="http://www.w3.org/2001/XInclude" xml:id="Virtual-Disk-Operations"
+  xmlns:xi="http://www.w3.org/2001/XInclude" xml:id="Kerberos-Guide"
   xmlns:xl="http://www.w3.org/1999/xlink" version="5.0">
 
   <info>
-    <title>The Linux Sysadmins Guide to Virtual Disks</title>
+    <title>Guide to Configure Kerberos</title>
 
     <subtitle>From the basics to the advanced.</subtitle>
 
     <authorgroup>
       <author>
         <personname>
-          <firstname>Tim</firstname>
-          <surname>Bielawa</surname>
+          <firstname>Henry</firstname>
+          <surname>Graham</surname>
         </personname>
-        <email>tbielawa@redhat.com</email>
+        <email>hzgraham@gmail.com</email>
       </author>
     </authorgroup>
 
@@ -22,26 +22,8 @@
       <title>Introduction</title>
 
       <para>
-	I was motivated to write this document because I felt the
-	quality of the information regarding commonly used
-	functionality in virtual disk operation was lacking certain
-	specific clear examples. The information that is available is
-	not contained in a central location. Some concepts of the qemu
-	system aren't covered at all. FAQs lead on to having an answer
-	to a particular query, but many lead you to off site
-	resources, some of which are no longer available on the
-	Internet.
-      </para>
-
-      <para>
-	What I hope to do is provide a document which will demonstrate
-	the core concepts of virtual disk management. This document
-	will concern itself primarily with the
-	<command>qemu-img</command> tool and common GNU/Linux disk
-	utility tools like <command>fdisk</command>. Most importantly
-	to me, in the case of non-trivial examples, I hope to identify
-	what the relevant technical concepts are how they work up to
-	the final result of each example.
+	I wanted to write this because in my search for information on
+	the subject of Kerberos, I was probably as confused as you.
       </para>
     </abstract>
 
@@ -65,18 +47,16 @@
     </legalnotice>
 
     <copyright>
-      <year>2009</year>
-      <year>2010</year>
-      <year>2011</year>
       <year>2012</year>
-      <holder>Tim Bielawa</holder>
+      <holder>Henry Graham</holder>
     </copyright>
   </info>
 
-  <xi:include href="docbook/Cookbook.xml"/>
-  <xi:include href="docbook/Concepts.xml"/>
-  <xi:include href="docbook/Advanced.xml"/>
+  <xi:include href="docbook/kerberos.xml"/>
+  <!-- <xi:include href="docbook/Cookbook.xml"/> -->
+  <!-- <xi:include href="docbook/Concepts.xml"/> -->
+  <!-- <xi:include href="docbook/Advanced.xml"/> -->
   <!-- <xi:include href="docbook/Other-Formats.xml"/> -->
   <!-- <xi:include href="docbook/Additional-Resources.xml"/> -->
-  <xi:include href="docbook/Appendix.xml"/>
+  <!-- <xi:include href="docbook/Appendix.xml"/> -->
 </book>
