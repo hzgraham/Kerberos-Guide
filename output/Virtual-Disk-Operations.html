@@ -1,0 +1,812 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>The Linux Sysadmins Guide to Virtual Disks</title><link rel="stylesheet" type="text/css" href="./lnx-docbook-stylesheet.css"><meta name="generator" content="DocBook XSL-NS Stylesheets V1.76.1"><meta name="description" content="Introduction I was motivated to write this document because I felt the quality of the information regarding commonly used functionality in virtual disk operation was lacking certain specific clear examples. The information that is available is not contained in a central location. Some concepts of the qemu system aren't covered at all. FAQs lead on to having an answer to a particular query, but many lead you to off site resources, some of which are no longer available on the Internet. What I hope to do is provide a document which will demonstrate the core concepts of virtual disk management. This document will concern itself primarily with the qemu-img tool and common GNU/Linux disk utility tools like fdisk. Most importantly to me, in the case of non-trivial examples, I hope to identify what the relevant technical concepts are how they work up to the final result of each example."></head><body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="book" title="The Linux Sysadmins Guide to Virtual Disks"><div class="titlepage"><div><div><h1 class="title"><a name="Virtual-Disk-Operations"></a>The Linux Sysadmins Guide to Virtual Disks</h1></div><div><h2 class="subtitle">From the basics to the advanced.</h2></div><div><div class="authorgroup"><div class="author"><h3 class="author"><span class="firstname">Tim</span> <span class="surname">Bielawa</span></h3><code class="email">&lt;<a class="email" href="mailto:tbielawa@redhat.com">tbielawa@redhat.com</a>&gt;</code></div></div></div><div><p class="copyright">Copyright © 2009, 2010, 2011, 2012 Tim Bielawa</p></div><div><div class="legalnotice" title="Legal Notice"><a name="idp109584"></a><p>
+	This work is licensed under the Creative Commons Attribution
+	3.0 United States License. To view a copy of this license,
+	visit <a class="link" href="http://creativecommons.org/licenses/by/3.0/us/" target="_top">http://creativecommons.org/licenses/by/3.0/us/</a> or
+	send a letter to Creative Commons, 171 Second Street, Suite
+	300, San Francisco, California, 94105, USA.
+      </p><p>
+        You can view the latest DocBook 5 XML source to this guide
+        under version control on the web at <a class="link" href="http://github.com/tbielawa/Virtual-Disk-Guide" target="_top">http://github.com/tbielawa/Virtual-Disk-Guide</a> and
+        an HTML compiled version under <a class="link" href="http://lnx.cx/docs/vdg/" target="_top">http://lnx.cx/docs/vdg/</a>.
+      </p></div></div><div><div class="abstract" title="Introduction"><p class="title"><b>Introduction</b></p><p>
+	I was motivated to write this document because I felt the
+	quality of the information regarding commonly used
+	functionality in virtual disk operation was lacking certain
+	specific clear examples. The information that is available is
+	not contained in a central location. Some concepts of the qemu
+	system aren't covered at all. FAQs lead on to having an answer
+	to a particular query, but many lead you to off site
+	resources, some of which are no longer available on the
+	Internet.
+      </p><p>
+	What I hope to do is provide a document which will demonstrate
+	the core concepts of virtual disk management. This document
+	will concern itself primarily with the
+	<span class="command"><strong>qemu-img</strong></span> tool and common GNU/Linux disk
+	utility tools like <span class="command"><strong>fdisk</strong></span>. Most importantly
+	to me, in the case of non-trivial examples, I hope to identify
+	what the relevant technical concepts are how they work up to
+	the final result of each example.
+      </p></div></div></div><hr></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="chapter"><a href="#VDI-Cookbook">1. The Virtual Disk Cookbook</a></span></dt><dd><dl><dt><span class="section"><a href="#VDI-Cookbook-Introduction">1. Introduction</a></span></dt><dt><span class="section"><a href="#VDG-Cookbook-Query-an-Image-for-Information">2. Query an Image for Information</a></span></dt><dt><span class="section"><a href="#VDG-Cookbook-Convert-Between-RAW-and-QCOW2">3. Converting Between RAW and QCOW2</a></span></dt><dd><dl><dt><span class="section"><a href="#VDG-Cookbook-Converting-from-RAW-to-QCOW2">3.1. Convert an Image from RAW to QCOW2</a></span></dt><dt><span class="section"><a href="#VDG-Cookbook-Converting-from-QCOW2-to-RAW">3.2. Convert an Image from QCOW2 to RAW</a></span></dt></dl></dd><dt><span class="section"><a href="#VDG-Cookbook-Create-Disks-with-Backing-Images">4. Creating Disks with Backing Images</a></span></dt><dt><span class="section"><a href="#VDG-Cookbook-Create-Simple-Images">5. Creating Simple Images</a></span></dt></dl></dd><dt><span class="chapter"><a href="#VDG-Concepts">2. Disk Concepts</a></span></dt><dd><dl><dt><span class="section"><a href="#VDG-Concepts-Introduction">1. Introduction</a></span></dt><dt><span class="section"><a href="#VDG-Concepts-Creation">2. Learning by doing (Creating a 1GiB virtual disk from scratch)</a></span></dt><dd><dl><dt><span class="section"><a href="#VDG-Concepts-Background-on-the-dd-Command">2.1. 
+    Background on the <span class="command"><strong>dd</strong></span> command
+  </a></span></dt><dt><span class="section"><a href="#VDG-Concepts-Running-dd">2.2. 
+    Running <span class="command"><strong>dd</strong></span>
+  </a></span></dt><dt><span class="section"><a href="#VDG-Concepts-Examining-the-Created-File">2.3. Examining the Created File</a></span></dt><dt><span class="section"><a href="#VDG-Concepts-Create-a-Partition-Table">2.4. Create a Partition Table</a></span></dt></dl></dd><dt><span class="section"><a href="#VDG-Concepts-Devices-and-Partitions">3. Devices and Partitions</a></span></dt><dd><dl><dt><span class="section"><a href="#VDG-Concepts-Devices-and-Partitions-Introduction">3.1. Introduction</a></span></dt><dt><span class="section"><a href="#VDG-Concepts-Creating-a-Loop-Device">3.2. Creating a Loop Device</a></span></dt><dt><span class="section"><a href="#VDG-Concepts-Examine-the-Loop-Device">3.3. Examine the loop device</a></span></dt><dt><span class="section"><a href="#VDG-Concepts-Creating-Partitions">3.4. Creating partitions</a></span></dt><dt><span class="section"><a href="#VDG-Concepts-Formatting-Partitions">3.5. Formatting Partitions</a></span></dt><dt><span class="section"><a href="#VDG-Concepts-Cleaning-Up">3.6. Cleaning Up</a></span></dt></dl></dd></dl></dd><dt><span class="chapter"><a href="#VDI-Advanced">3. Advanced Operations</a></span></dt><dd><dl><dt><span class="section"><a href="#VDI-Advanced-Creating-A-Mountable-Disk">1. Creating a Mountable Disk</a></span></dt><dt><span class="section"><a href="#VDI-Advanced-Cloning-A-Physical-Disk">2. Cloning a Physical Disk</a></span></dt></dl></dd><dt><span class="appendix"><a href="#VDG-Appendix-Index">A. Appendices</a></span></dt><dd><dl><dt><span class="refentrytitle"><a href="#VDG-Appendix-Units">UNITS</a></span><span class="refpurpose"> — decimal and binary prefixes</span></dt></dl></dd></dl></div><div class="list-of-tables"><p><b>List of Tables</b></p><dl><dt>2.1. <a href="#VDG-Concepts-Comparison1">Attribute Comparison</a></dt><dt>2.2. <a href="#VDG-Concepts-Create-A-Partition-Table-What-Changed">What <span class="command">parted</span> Changed</a></dt><dt>2.3. <a href="#VDG-Concepts-Example-Examine-the-Loop-Device">Examining the Loop Device</a></dt><dt>A.1. <a href="#idp469520">Binary Preflixes</a></dt></dl></div><div class="list-of-examples"><p><b>List of Examples</b></p><dl><dt>1.1. <a href="#VDG-Cookbook-Example-Query-an-Image">Querying an Image</a></dt><dt>1.2. <a href="#VDG-Cookbook-Example-Convert-from-RAW-to-QCOW2">Converting from RAW to QCOW2</a></dt><dt>1.3. <a href="#VDG-Cookbook-Example-Convert-from-QCOW2-to-RAW">Converting from QCOW2 to RAW</a></dt><dt>1.4. <a href="#VDG-Cookbook-Example-Create-Disk-with-a-Backing-Image">Creating a Disk with a Backing Image</a></dt><dt>1.5. <a href="#VDG-Cookbook-Example-Creating-Simple-Images">
+      Using <span class="command">qemu-img</span> to Create RAW Images
+    </a></dt><dt>2.1. <a href="#VDG-Concepts-Regular-Drive">Regular Disk Drive</a></dt><dt>2.2. <a href="#VDG-Concepts-Example-Using-dd">Running the <span class="command">dd</span> command</a></dt><dt>2.3. <a href="#VDG-Concepts-Example-Examining-the-Created-File">Examining the Created File</a></dt><dt>2.4. <a href="#VDG-Concepts-Example-Create-a-Partition-Table">Create a Partition Table</a></dt><dt>2.5. <a href="#VDG-Concepts-Example-Create-a-Partition-Table-Changes">Overview - What Changed </a></dt><dt>2.6. <a href="#VDG-Concepts-Example-Run-losetup">Creating a loop device with <span class="command">losetup</span></a></dt><dt>2.7. <a href="#VDG-Concepts-Example-Examine-the-Loop-Device-example">Examining the Loop Device</a></dt><dt>2.8. <a href="#VDG-Concepts-Example-Create-Partition">Creating a partition with <span class="command">fdisk</span></a></dt><dt>2.9. <a href="#VDG-Concepts-Example-Partition-Formating">Formatting the partition</a></dt><dt>2.10. <a href="#VDG-Concepts-Example-Detaching-a-loop-device">Detaching a loop device</a></dt><dt>3.1. <a href="#VDI-Advanced-Cloning-A-Physical-Disk-Example">Making a virtual disk from a physical disk</a></dt></dl></div><div class="list-of-equations"><p><b>List of Equations</b></p><dl><dt>2.1. <a href="#eq.count">Calculating the Count</a></dt><dt>2.2. <a href="#VDG-Concepts-Capacity-Equation">Total Capacity of a Disk</a></dt></dl></div><div class="chapter" title="Chapter 1. The Virtual Disk Cookbook"><div class="titlepage"><div><div><h2 class="title"><a name="VDI-Cookbook"></a>Chapter 1. The Virtual Disk Cookbook</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#VDI-Cookbook-Introduction">1. Introduction</a></span></dt><dt><span class="section"><a href="#VDG-Cookbook-Query-an-Image-for-Information">2. Query an Image for Information</a></span></dt><dt><span class="section"><a href="#VDG-Cookbook-Convert-Between-RAW-and-QCOW2">3. Converting Between RAW and QCOW2</a></span></dt><dd><dl><dt><span class="section"><a href="#VDG-Cookbook-Converting-from-RAW-to-QCOW2">3.1. Convert an Image from RAW to QCOW2</a></span></dt><dt><span class="section"><a href="#VDG-Cookbook-Converting-from-QCOW2-to-RAW">3.2. Convert an Image from QCOW2 to RAW</a></span></dt></dl></dd><dt><span class="section"><a href="#VDG-Cookbook-Create-Disks-with-Backing-Images">4. Creating Disks with Backing Images</a></span></dt><dt><span class="section"><a href="#VDG-Cookbook-Create-Simple-Images">5. Creating Simple Images</a></span></dt></dl></div><div class="section" title="1. Introduction"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="VDI-Cookbook-Introduction"></a>1. Introduction</h2></div></div></div><p>
+      In this section we're just going to cover things you'll find
+      yourself needing to do from time to time. Theory and concepts
+      will be covered later on. It's assumed that you're comfortable
+      with the concepts already and don't need everything explained.
+    </p></div><div class="section" title="2. Query an Image for Information"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="VDG-Cookbook-Query-an-Image-for-Information"></a>2. Query an Image for Information</h2></div></div></div><p>
+    How to query some basic information about virtual disks. The tools
+    of the trade here are going to be <span class="command"><strong>ls</strong></span> to check
+    disk usage, <span class="command"><strong>file</strong></span> for a quick check of the
+    types, and <span class="command"><strong>qemu-img</strong></span> for more in-depth
+    information.
+  </p><div class="example"><a name="VDG-Cookbook-Example-Query-an-Image"></a><p class="title"><b>Example 1.1. Querying an Image</b></p><div class="example-contents"><pre class="screen">tbielawa@deepfryer:/srv/images$ ls -lhs
+total 136K
+136K -rw-r-----. 1 tbielawa tbielawa 256K May  8 18:00 image-qcow.qcow2
+   0 -rw-r-----. 1 tbielawa tbielawa  10G May  8 18:00 image-raw.raw
+
+tbielawa@deepfryer:/srv/images$ file image-qcow.qcow2 image-raw.raw
+image-qcow.qcow2: Qemu Image, Format: Qcow , Version: 2
+image-raw.raw:    data
+
+tbielawa@deepfryer:/srv/images$ qemu-img info image-qcow.qcow2
+image: image-qcow.qcow2
+file format: qcow2
+virtual size: 10G (10737418240 bytes)
+disk size: 136K
+cluster_size: 65536
+
+tbielawa@deepfryer:/srv/images$ qemu-img info image-raw.raw
+image: image-raw.raw
+file format: raw
+virtual size: 10G (10737418240 bytes)
+disk size: 0</pre></div></div><br class="example-break"><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+      These images are freshly created and don't have any information
+      on them yet. Both were created to be 10G images.
+    </p></div><p>
+    The interesting information we can get from using <span class="command"><strong>ls
+    -lhs</strong></span> is how the files are actually
+    sized. <code class="filename">image-raw.raw</code> appears to be 10G but
+    doesn't have any actual blocks allocated to it yet. It is
+    literally an empty file. What's good about these RAW disks is that
+    you don't need any special kind of tools to know how large the
+    disk is internally. The RAW image should always match it's
+    reported file size on the host OS.
+  </p><p>
+    Our QCOW, on the other hand, is being deceptive and concealing
+    it's true size. QCOWs will grow to their maximum size over
+    time. What makes it different from our RAW image in this case is
+    that it already has blocks allocated to it (that information is in
+    the left-most column and comes from the <code class="option">-s</code> flag
+    to <span class="command"><strong>ls</strong></span>). The allocated space is overhead from
+    the meta-data associated with the QCOW image format.
+  </p><p>
+    The <span class="command"><strong>file</strong></span> command tells us immediately what it
+    thinks each file is. This is another simple to perform query that
+    you can run from any system without special tools. Here we see it
+    correctly recports <code class="filename">image-qcow.qcow2</code>s
+    type. Unfortunately, without any content, all it can tell us about
+    <code class="filename">image-raw.raw</code> is that it's 'data'.
+  </p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+      Its worth mentioning that RAW image types will be reported by
+      <span class="command"><strong>file</strong></span> as "x86 boot sector, code offset 0xb8"
+      once given a filesystem label and a partition table.
+    </p></div><p>
+    Using the <span class="command"><strong>qemu-img</strong></span> command we can get more
+    detailed information about the disk images in a clearly presented
+    format.
+  </p><p>
+    With <span class="command"><strong>qemu-img</strong></span> it's clear that
+    <code class="filename">image-qcow.qcow2</code> is a QCOW2 type image and is
+    only 136K on disk and internally (the 'virtual size' field) is a
+    10G disk image. If the QCOW had a backing image the path to that
+    file would be shown here as an additional field.
+  </p><p>
+    For the RAW image there is no new information here that we didn't
+    already get from the <span class="command"><strong>ls</strong></span>.
+  </p></div><div class="section" title="3. Converting Between RAW and QCOW2"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="VDG-Cookbook-Convert-Between-RAW-and-QCOW2"></a>3. Converting Between RAW and QCOW2</h2></div></div></div><div class="section" title="3.1. Convert an Image from RAW to QCOW2"><div class="titlepage"><div><div><h3 class="title"><a name="VDG-Cookbook-Converting-from-RAW-to-QCOW2"></a>3.1. Convert an Image from RAW to QCOW2</h3></div></div></div><p>
+      RAW images, though simple to work with, carry the disadvantage of
+      increased disk usage on the host OS. One option to have is to
+      convert the image into the QCOW2 format which uses zlib
+      compression and optionally allows for 128 bit AES encryption.
+    </p><div class="example"><a name="VDG-Cookbook-Example-Convert-from-RAW-to-QCOW2"></a><p class="title"><b>Example 1.2. Converting from RAW to QCOW2</b></p><div class="example-contents"><pre class="screen">tbielawa@deepfryer:/srv/images$ qemu-img convert -O qcow2 image-raw.raw image-raw-converted.qcow
+
+tbielawa@deepfryer:/srv/images$ qemu-img info image-raw-converted.qcow
+image: image-raw-converted.qcow
+file format: qcow2
+virtual size: 10G (10737418240 bytes)
+disk size: 136K
+cluster_size: 65536</pre></div></div><br class="example-break"><p>
+      It's that simple.
+    </p></div><div class="section" title="3.2. Convert an Image from QCOW2 to RAW"><div class="titlepage"><div><div><h3 class="title"><a name="VDG-Cookbook-Converting-from-QCOW2-to-RAW"></a>3.2. Convert an Image from QCOW2 to RAW</h3></div></div></div><p>
+      Here's how to do the last example, but in reverse.
+    </p><div class="example"><a name="VDG-Cookbook-Example-Convert-from-QCOW2-to-RAW"></a><p class="title"><b>Example 1.3. Converting from QCOW2 to RAW</b></p><div class="example-contents"><pre class="screen">tbielawa@deepfryer:/srv/images$ qemu-img convert -O qcow2 image-raw.raw image-raw-converted.qcow
+
+tbielawa@deepfryer:/srv/images$ qemu-img info image-raw-converted.qcow
+image: image-raw-converted.qcow
+file format: qcow2
+virtual size: 10G (10737418240 bytes)
+disk size: 136K
+cluster_size: 65536</pre></div></div><br class="example-break"><p>
+      It's that simple.
+    </p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+	When converted to the RAW format the image has the potential
+	to take up much more disk space than before.
+      </p></div></div></div><div class="section" title="4. Creating Disks with Backing Images"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="VDG-Cookbook-Create-Disks-with-Backing-Images"></a>4. Creating Disks with Backing Images</h2></div></div></div><p>
+    Using backing images for work I was doing is a trick I figured out
+    a few years ago. Back then I was doing lots of development on a
+    host provisioning tools and needed to be able to quickly revert
+    machines I was working on to a perfect clean state. Backing images
+    were especially handy when working on features that frequently
+    hosed the machine if it didn't work right.
+  </p><p>
+    Snapshots were an option, but how they worked wasn't documented
+    very well at the time (Snapshots will be covered in another
+    section). The technical concepts and practical skills describe in
+    this section mostly applies to Snapshots too.
+  </p><p>
+    So I went with backing images, they worked great for what I needed
+    to them do. I could work incrementally and "commit" changes in the
+    COW image (copy-on-write) back to the master. I also could use the
+    same base-image for multiple COWs at once which meant other people
+    on my team could all be using the same base-image if we were
+    working on the same thing.
+  </p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+      The terms <code class="literal">base-image</code> and
+      <code class="literal">backing-image</code> are used interchangably to
+      refer to the read-only image that is used to back a read-write
+      disk.
+    </p></div><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+      When we refer to a <code class="literal">COW</code> image it has no
+      connotation to the <code class="literal">COW</code> ("copy-on-write") disk
+      format. Saying <code class="literal">COW</code> only serves to help make a
+      distinction between the read-only base-image and the image that
+      changes are copied to on writing.
+    </p></div><div class="example"><a name="VDG-Cookbook-Example-Create-Disk-with-a-Backing-Image"></a><p class="title"><b>Example 1.4. Creating a Disk with a Backing Image</b></p><div class="example-contents"><pre class="screen">tbielawa@deepfryer:/srv/images$ mkdir base-images
+tbielawa@deepfryer:/srv/images$ mkdir webserver01
+tbielawa@deepfryer:/srv/images$ cd base-images
+
+tbielawa@deepfryer:/srv/images/base-images$ qemu-img create -f qcow2 image-webserver-base.qcow2 10G
+Formatting 'image-webserver-base.qcow2', fmt=qcow2 size=10737418240 encryption=off cluster_size=0
+tbielawa@deepfryer:/srv/images/base-images$ cd ../webserver01
+
+tbielawa@deepfryer:/srv/images/webserver01$ qemu-img create -b /srv/images/base-images/image-webserver-base.qcow2 -f qcow2 image-webserver-devel.qcow2
+Formatting 'image-webserver-devel.qcow2', fmt=qcow2 size=10737418240 backing_file='/srv/images/base-images/image-webserver-base.qcow2' encryption=off cluster_size=0
+
+tbielawa@deepfryer:/srv/images/webserver01$ qemu-img info image-webserver-devel.qcow2
+image: image-webserver-devel.qcow2
+file format: qcow2
+virtual size: 10G (10737418240 bytes)
+disk size: 136K
+cluster_size: 65536
+backing file: /srv/images/base-images/image-webserver-base.qcow2 (actual path: /srv/images/base-images/image-webserver-base.qcow2)
+tbielawa@deepfryer:/srv/images/webserver01$</pre></div></div><br class="example-break"><div class="procedure" title="Procedure 1.1. Steps in Detail"><a name="VDG-Cookbook-Steps-Create-Disk-with-a-Backing-Image"></a><p class="title"><b>Procedure 1.1. Steps in Detail</b></p><ol class="procedure" type="1"><li class="step" title="Step 1"><p>
+	It's bad practice to just have a bunch of disk images in a
+	directory so we made two here. <code class="filename">/srv/images/base-images/</code> to hold
+	all the base-images on this system and <code class="filename">/srv/images/webserver01</code> to later
+	hold the disk assigned to the virtual machine.
+      </p></li><li class="step" title="Step 2"><p>
+	Next we go into the base images directory and create a small
+	10G image, type: QCOW2.
+      </p></li><li class="step" title="Step 3"><p>
+	Normally what we used to do at this point is create a virtual
+	machine that uses this disk for it's primary drive. It would
+	get a base OS provisioned on it and any other tweaks we needed
+	there each time it was wiped.
+      </p></li><li class="step" title="Step 4"><p>
+	Once the machine was what we wanted in a "Golden Master" it
+	was shutdown and the backing image would be made read-only.
+      </p></li><li class="step" title="Step 5"><p>
+	The next step was creating the copy-on-write (COW) image. See
+	how in the example we give the <code class="option">-b</code> option with
+	the <span class="emphasis"><em>full path</em></span> to the base-image? Also
+	note that no size is given after the file name. Size is
+	constrained to the size of a disks base-image.
+      </p></li><li class="step" title="Step 6"><p>
+	With the image preparation complete we would modify the
+	virtual machines configuration and set its primary disk drive
+	to the COW in the webserver01 directory.
+      </p></li></ol></div><p>
+    Sometimes we would want to update a base-image to resemble the
+    contents of an attached COW image. Maybe we wanted to make the
+    latest system updates a part of the base image, or a configuration
+    setting needed to be updated. This was as simple as making the
+    base-image read-write, and running <span class="command"><strong>qemu-img commit
+    /srv/images/webserver01/image-webserver-devel.qcow2</strong></span>.
+  </p><div class="important" title="Important" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Important</h3><p>
+      It's not crucial, but highly recommend that the virtual machine
+      is turned off when running the <span class="command"><strong>commit</strong></span>
+      command.
+    </p></div></div><div class="section" title="5. Creating Simple Images"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="VDG-Cookbook-Create-Simple-Images"></a>5. Creating Simple Images</h2></div></div></div><p>
+    The simplest operation (next to deleting an image) you can do is
+    creating a new virtual disk image. Depending on what type you
+    choose there are several options available when creating an
+    image. For example, if you want encryption, if you want a format
+    that supports compression, or even what existing image to base
+    this new disk off of.
+  </p><p>
+    In this example we will start simple and only show how to create
+    basic images in different formats. Each will appear to a virtual
+    machine as being 10G in capacity.
+  </p><div class="example"><a name="VDG-Cookbook-Example-Creating-Simple-Images"></a><p class="title"><b>Example 1.5. 
+      Using <span class="command">qemu-img</span> to Create RAW Images
+    </b></p><div class="example-contents"><pre class="screen">tbielawa@deepfryer:/srv/images/$ qemu-img create webserver.raw 10G
+Formatting 'websserver.raw', fmt=raw, size=10485760 kB</pre></div></div><br class="example-break"><p>
+    From the <code class="literal">fmt</code> attribute above you can see that
+    the type of virtual disk crated was RAW, this is the default when
+    using <span class="command"><strong>qemu-img</strong></span>. You can also see that the disk
+    will appear as a 10G drive when used in a virtual machine.
+  </p></div></div><div class="chapter" title="Chapter 2. Disk Concepts"><div class="titlepage"><div><div><h2 class="title"><a name="VDG-Concepts"></a>Chapter 2. Disk Concepts</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#VDG-Concepts-Introduction">1. Introduction</a></span></dt><dt><span class="section"><a href="#VDG-Concepts-Creation">2. Learning by doing (Creating a 1GiB virtual disk from scratch)</a></span></dt><dd><dl><dt><span class="section"><a href="#VDG-Concepts-Background-on-the-dd-Command">2.1. 
+    Background on the <span class="command"><strong>dd</strong></span> command
+  </a></span></dt><dt><span class="section"><a href="#VDG-Concepts-Running-dd">2.2. 
+    Running <span class="command"><strong>dd</strong></span>
+  </a></span></dt><dt><span class="section"><a href="#VDG-Concepts-Examining-the-Created-File">2.3. Examining the Created File</a></span></dt><dt><span class="section"><a href="#VDG-Concepts-Create-a-Partition-Table">2.4. Create a Partition Table</a></span></dt></dl></dd><dt><span class="section"><a href="#VDG-Concepts-Devices-and-Partitions">3. Devices and Partitions</a></span></dt><dd><dl><dt><span class="section"><a href="#VDG-Concepts-Devices-and-Partitions-Introduction">3.1. Introduction</a></span></dt><dt><span class="section"><a href="#VDG-Concepts-Creating-a-Loop-Device">3.2. Creating a Loop Device</a></span></dt><dt><span class="section"><a href="#VDG-Concepts-Examine-the-Loop-Device">3.3. Examine the loop device</a></span></dt><dt><span class="section"><a href="#VDG-Concepts-Creating-Partitions">3.4. Creating partitions</a></span></dt><dt><span class="section"><a href="#VDG-Concepts-Formatting-Partitions">3.5. Formatting Partitions</a></span></dt><dt><span class="section"><a href="#VDG-Concepts-Cleaning-Up">3.6. Cleaning Up</a></span></dt></dl></dd></dl></div><div class="section" title="1. Introduction"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="VDG-Concepts-Introduction"></a>1. Introduction</h2></div></div></div><p>
+    The best way to learn is by doing, so to learn the concepts of
+    virtual disks we're going to create a 1GiB virtual disk from
+    scratch. This information is applicable to the topic of disks in
+    general, it's value is not limited to virtual disks.
+  </p><p>
+    What makes virtual disks any different from actual hard drives?
+    We'll examine this question by creating a virtual disk from
+    scratch.
+  </p><p>
+    What does your operating system think a disk drive is? I have a
+    320 GB SATA drive in my computer which is represented in Linux
+    as the file <code class="systemitem">/dev/sda</code>.
+    Using <span class="command"><strong>file</strong></span>, <span class="command"><strong>stat</strong></span> and
+    <span class="command"><strong>fdisk</strong></span> we'll see what Linux thinks the
+    <code class="systemitem">/dev/sda</code> file is.
+  </p><p>
+    Lets start out by looking at what a regular drive looks like to
+    our operating system. Throughout this document the regular drive
+    we'll be comparing our findings against will be a 320G SATA hard
+    drive drive that Linux references as <code class="systemitem">/dev/sda</code>. The following example
+    shows some basic information about the device.
+  </p><div class="example"><a name="VDG-Concepts-Regular-Drive"></a><p class="title"><b>Example 2.1. Regular Disk Drive</b></p><div class="example-contents"><pre class="screen">
+    &lt;tbielawa&gt;@(fridge)[~/images]
+    $ file /dev/sda
+    /dev/sda: block special
+    &lt;tbielawa&gt;@(fridge)[~/images]
+    $ stat /dev/sda
+    File: `/dev/sda'
+    Size: 0             Blocks: 0          IO Block: 4096   block special file
+    Device: 5h/5d               Inode: 5217        Links: 1     Device type: 8,0
+    Access: (0660/brw-rw----)  Uid: (    0/    root)   Gid: (    6/    disk)
+    Access: 2010-09-15 01:09:02.060722589 -0400
+    Modify: 2010-09-12 11:03:20.831372852 -0400
+    Change: 2010-09-12 11:03:26.226369247 -0400
+    &lt;tbielawa&gt;@(fridge)[~/images]
+    $ sudo fdisk -l /dev/sda
+
+    Disk /dev/sda: 320.1 GB, 320071851520 bytes
+    255 heads, 63 sectors/track, 38913 cylinders
+    Units = cylinders of 16065 * 512 = 8225280 bytes
+    Disk identifier: 0x12031202
+
+    Device Boot      Start         End      Blocks   Id  System
+    /dev/sda1               1       25496   204796588+   7  HPFS/NTFS
+    /dev/sda2           25497       31870    51199155   83  Linux
+    /dev/sda3           31871       33086     9767520   82  Linux swap / Solaris
+    /dev/sda4           33087       38913    46805377+   5  Extended
+    /dev/sda5   *       33087       38913    46805346   83  Linux</pre></div></div><br class="example-break"><p>
+    The term "block" is generally interchangeable with the term
+    "sector". The only difference in their meaning is
+    contextual. It's common usage to say block when referring to the
+    data being referenced and to use sector when speaking about disk
+    geometry. Officially the term "data block" was defined by
+    <span class="orgname">ANSI ASC X3</span> in ANSI X3.221-199xata
+    <em class="citetitle">AT Attachment Interface for Disk Drives
+    (ATA-1)</em> §3.1.3 as:
+  </p><div class="variablelist"><dl><dt><span class="term">data block</span></dt><dd><p>
+          This term describes a data transfer, and is typically a
+          single sector [...].
+        </p></dd></dl></div><p>
+    Storage units need to be clearly defined. Luckily some very
+    smart people already took care of that. The
+    <span class="orgname">International Electrotechnical Commission</span>
+    defined binary prefixes for use in the fields of data processing
+    and data transmission. Below are some applied to bytes. See
+    <a class="xref" href="#VDG-Appendix-Units" title="UNITS"><span class="refentrytitle">UNITS</span>(7)</a> for the full prefix
+    listing.
+  </p><div class="informaltable"><table border="0"><colgroup><col align="center" class="c1"><col align="center" class="c2"><col align="center" class="c3"></colgroup><thead><tr><th align="left">Abbrev.</th><th align="left">Measurement</th><th align="left">Name</th></tr></thead><tbody><tr><td align="left">1B</td><td align="left">= 8 bits</td><td align="left">The byte</td></tr><tr><td align="left">1KiB</td><td align="left">= 1B * 2<sup>10</sup></td><td align="left">The kibibyte</td></tr><tr><td align="left">1MiB</td><td align="left">= 1KiB * 2<sup>10</sup></td><td align="left">The mebibyte</td></tr><tr><td align="left">1GiB</td><td align="left">= 1MiB * 2<sup>10</sup></td><td align="left"> </td></tr><tr><td align="left"> </td><td align="left">
+            = 1B * 2<sup>10</sup> *
+            2<sup>10</sup> *
+            2<sup>10</sup>
+          </td><td align="left">The gibibyte</td></tr><tr><td align="left"> </td><td align="left">= 1B * 2<sup>30</sup></td><td align="left"> </td></tr><tr><td align="left"> </td><td align="left">= 1B * 1073741824 (1,073,741,824)</td><td align="left"> </td></tr></tbody></table></div></div><div class="section" title="2. Learning by doing (Creating a 1GiB virtual disk from scratch)"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="VDG-Concepts-Creation"></a>2. Learning by doing (Creating a 1GiB virtual disk from scratch)</h2></div></div></div><div class="section" title="2.1.  Background on the dd command"><div class="titlepage"><div><div><h3 class="title"><a name="VDG-Concepts-Background-on-the-dd-Command"></a>2.1. 
+    Background on the <span class="command"><strong>dd</strong></span> command
+  </h3></div></div></div><p>
+    We'll use the <span class="command"><strong>dd</strong></span> command to create the file
+    that represents our virtual disk. Other higher level tools
+    like <span class="command"><strong>qemu-img</strong></span> exist to do similar things
+    but using <span class="command"><strong>dd</strong></span> will give us a deeper insight
+    into what's going on. <span class="command"><strong>dd</strong></span> will only be used
+    in the introductory part of this document, later on we will
+    use the <span class="command"><strong>qemu-img</strong></span> command almost
+    exclusively.
+  </p><p>
+    If we're creating a 1GiB disk that means the file needs to be
+    exactly 2<sup>30</sup> bytes in size. By default
+    <span class="command"><strong>dd</strong></span> operates in block sized chunks. This means
+    that to create 2<sup>30</sup> bytes it needs to
+    push a calculable number of these chunks into our target disk
+    file. This number is referred to as the <code class="option">count</code>. To
+    calculate the proper <code class="option">count</code> setting we need only
+    to divide the total number of bytes required by the size of a each
+    block. The block size is given to <span class="command"><strong>dd</strong></span> with the
+    <code class="option">bs</code> option. It specifies the block size in
+    bytes. If not explicitly defined, it defaults to 512 byte blocks
+    (2<sup>9</sup>).
+  </p><div class="equation"><a name="eq.count"></a><p class="title"><b>Equation 2.1. Calculating the Count</b></p><div class="equation-contents"><span class="mathphrase">
+      count = 2<sup>30</sup>
+      / 2 <sup>9</sup> =
+    1073741824/512 = 2097152 (2,097,152)</span></div></div><br class="equation-break"><p>
+    We need something to fill the file with that has a negligible
+    value. On Unix systems the best thing to use is the output from
+    <code class="systemitem">/dev/zero</code> (a special
+    character device like a keyboard). We specify <code class="systemitem">/dev/zero</code> as our input file to
+    <span class="command"><strong>dd</strong></span> by using the <code class="option">if</code> option.
+  </p><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+      <code class="systemitem">/dev/zero</code> doesn't
+      provide endless "0"s. It actually provides endless
+      <span class="keycode">NUL</span> control characters(<span class="keycap"><strong>^@</strong></span> in
+      Caret Notation <sup>[<a name="idp525520" href="#ftn.idp525520" class="footnote">1</a>]</sup>). The
+      <span class="keycode">NUL</span> control character has the octal value
+      <span class="keycode">000</span>. The actual ASCII zero character
+      <span class="keycap"><strong>0</strong></span> has the octal value <span class="keycode">060</span>.
+    </p></div><p>
+    <span class="keycode">NUL</span> being a control character
+    <sup>[<a name="idp529616" href="#ftn.idp529616" class="footnote">2</a>]</sup> means it's a
+    non-printing character (it doesn't represent a written symbol), so
+    if you want to identify it you can use <span class="command"><strong>cat</strong></span> like
+    this to print 5 <span class="keycode">NUL</span> characters in Caret
+    Notation:
+  </p><pre class="screen">tbielawa@deepfryer:~$ dd if=/dev/zero bs=1 count=5 2&gt;/dev/null | cat -v
+^@^@^@^@^@</pre><p>
+    You can also convert the output from <code class="systemitem">/dev/zero</code> into ASCII
+    <span class="keycap"><strong>0</strong></span> characters like this:
+  </p><pre class="screen">tbielawa@deepfryer:~$ if=/dev/zero bs=1 count=5 2&gt;/dev/null | tr "\0" "\60"
+00000</pre></div><div class="section" title="2.2.  Running dd"><div class="titlepage"><div><div><h3 class="title"><a name="VDG-Concepts-Running-dd"></a>2.2. 
+    Running <span class="command"><strong>dd</strong></span>
+  </h3></div></div></div><p>
+    With the information from the preceding sections we can now
+    create the file that will soon be a virtual disk. The file
+    we create will be called <code class="filename">disk1.raw</code> and
+    filled with 2097152 blocks of <span class="keycode">NUL</span>
+    characters from <code class="systemitem">/dev/null</code>. Here's the command:
+  </p><div class="example"><a name="VDG-Concepts-Example-Using-dd"></a><p class="title"><b>Example 2.2. Running the <span class="command">dd</span> command</b></p><div class="example-contents"><pre class="screen">&lt;tbielawa&gt;@(fridge)~$ dd if=/dev/zero of=disk1.raw bs=512 count=2097152</pre></div></div><br class="example-break"><p>
+    Now that you know what <code class="systemitem">/dev/zero</code> is it's obvious this is
+    just a file containing 2<sup>30</sup> bytes (1GiB)
+    of data. Each byte literally having the value '0'.
+  </p></div><div class="section" title="2.3. Examining the Created File"><div class="titlepage"><div><div><h3 class="title"><a name="VDG-Concepts-Examining-the-Created-File"></a>2.3. Examining the Created File</h3></div></div></div><p>
+    Like in <a class="xref" href="#VDG-Concepts-Regular-Drive" title="Example 2.1. Regular Disk Drive">Example 2.1, “Regular Disk Drive”</a> lets
+    take a look at the file we created from the operating
+    systems point of view.
+  </p><div class="example"><a name="VDG-Concepts-Example-Examining-the-Created-File"></a><p class="title"><b>Example 2.3. Examining the Created File</b></p><div class="example-contents"><pre class="screen">&lt;tbielawa&gt;@(fridge)[~/images]
+$ dd if=/dev/zero of=disk1.raw bs=512 count=2097152
+2097152+0 records in
+2097152+0 records out
+1073741824 bytes (1.1 GB) copied, 10.8062 s, 99.4 MB/s
+
+&lt;tbielawa&gt;@(fridge)[~/images]
+$ file disk1.raw
+disk1.raw: data
+
+&lt;tbielawa&gt;@(fridge)[~/images]
+$ stat disk1.raw
+  File: `disk1.raw'
+  Size: 1073741824	Blocks: 2097152    IO Block: 4096   regular file
+Device: 805h/2053d	Inode: 151552      Links: 1
+Access: (0644/-rw-r--r--)  Uid: (  500/tbielawa)   Gid: (  500/tbielawa)
+Access: 2010-09-15 02:51:36.147724384 -0400
+Modify: 2010-09-15 02:51:25.729720057 -0400
+Change: 2010-09-15 02:51:25.729720057 -0400
+
+&lt;tbielawa&gt;@(fridge)[~/images]
+$ fdisk -l disk1.raw
+
+Disk disk1.raw: 0 MB, 0 bytes
+255 heads, 63 sectors/track, 0 cylinders
+Units = cylinders of 16065 * 512 = 8225280 bytes
+Disk identifier: 0x00000000
+
+Disk disk1.raw doesn't contain a valid partition table</pre></div></div><br class="example-break"><p>
+    From this it's quite clear that there isn't much
+    <code class="filename">disk1.raw</code> has in common with the actual
+    disk drive <code class="systemitem">sda</code>.
+  </p><div class="itemizedlist"><ul class="itemizedlist" type="opencircle"><li class="listitem" style="list-style-type: circle"><p>
+        <span class="command"><strong>file</strong></span> thinks it's "data", which the
+        <span class="command"><strong>file</strong></span> manual page says is how it labels
+        what are usually ‘binary’ or non-printable files.
+      </p></li><li class="listitem" style="list-style-type: circle"><p>
+        <span class="command"><strong>stat</strong></span> says it's just a regular file.
+      </p></li><li class="listitem" style="list-style-type: circle"><p>
+        <span class="command"><strong>fdisk</strong></span> doesn't knows how big it is, nor
+        can it find any partition information on it.
+      </p></li></ul></div><table border="1" id="VDG-Concepts-Comparison1"><caption>Table 2.1. Attribute Comparison</caption><tr>
+      <td>Command</td>
+      <td><code class="systemitem">sda</code></td>
+      <td><code class="filename">disk1.raw</code></td>
+    </tr><tr>
+      <td><span class="command"><strong>file</strong></span></td>
+      <td>block special</td>
+      <td>data</td>
+    </tr><tr>
+      <td><span class="command"><strong>stat</strong></span></td>
+      <td>block special</td>
+      <td>regular file</td>
+    </tr><tr>
+      <td><span class="command"><strong>fdisk</strong></span></td>
+      <td>Contains partition table</td>
+      <td>Missing partition table</td>
+    </tr></table><p>
+    These results make perfect sense. <code class="filename">disk1.raw</code>
+    is just 2<sup>30</sup> 0's in a row
+  </p></div><div class="section" title="2.4. Create a Partition Table"><div class="titlepage"><div><div><h3 class="title"><a name="VDG-Concepts-Create-a-Partition-Table"></a>2.4. Create a Partition Table</h3></div></div></div><p>
+    Use GNU <span class="command"><strong>parted</strong></span> to put a valid partition table
+    on the image file.
+  </p><div class="example"><a name="VDG-Concepts-Example-Create-a-Partition-Table"></a><p class="title"><b>Example 2.4. Create a Partition Table</b></p><div class="example-contents"><pre class="screen">&lt;tbielawa&gt;@(fridge)[~/images]
+$ parted disk1.raw mklabel msdos
+WARNING: You are not superuser.  Watch out for permissions.</pre></div></div><br class="example-break"><p>
+    Lets examine the image again to see how the operating system
+    thinks it has changed.
+  </p><div class="example"><a name="VDG-Concepts-Example-Create-a-Partition-Table-Changes"></a><p class="title"><b>Example 2.5. Overview - What Changed </b></p><div class="example-contents"><pre class="screen">&lt;tbielawa&gt;@(fridge)[~/images]
+$ file disk1.raw
+disk1.raw: x86 boot sector, code offset 0xb8
+
+&lt;tbielawa&gt;@(fridge)[~/images]
+$ stat disk1.raw
+  File: `disk1.raw'
+  Size: 1073741824      Blocks: 2097160    IO Block: 4096   regular file
+Device: 805h/2053d      Inode: 151552      Links: 1
+Access: (0644/-rw-r--r--)  Uid: (  500/tbielawa)   Gid: (  500/tbielawa)
+Access: 2010-09-15 19:38:30.516826093 -0400
+Modify: 2010-09-15 19:38:25.934611550 -0400
+Change: 2010-09-15 19:38:25.934611550 -0400
+
+&lt;tbielawa&gt;@(fridge)[~/images]
+$ fdisk -l disk1.raw
+You must set cylinders.
+You can do this from the extra functions menu.
+
+Disk disk1.raw: 0 MB, 0 bytes
+255 heads, 63 sectors/track, 0 cylinders
+Units = cylinders of 16065 * 512 = 8225280 bytes
+Disk identifier: 0x000e44e8
+
+    Device Boot      Start         End      Blocks   Id  System</pre></div></div><br class="example-break"><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>
+	Now when we run <span class="command"><strong>file</strong></span> instead of "data"
+	<span class="command"><strong>file</strong></span> thinks it is an x86 boot sector. That
+	sounds pretty accurate since we just put a partition table on
+	it.
+      </p></li><li class="listitem"><p>
+        <span class="command"><strong>stat</strong></span> still thinks it's a regular file (as
+        opposed to a block special device, or a socket, etc...).
+      </p></li><li class="listitem"><p>
+        <span class="command"><strong>fdisk</strong></span> was able to find a partition table in
+        that boot sector that <span class="command"><strong>file</strong></span> found.
+      </p></li></ul></div><div class="table"><a name="VDG-Concepts-Create-A-Partition-Table-What-Changed"></a><p class="title"><b>Table 2.2. What <span class="command">parted</span> Changed</b></p><div class="table-contents"><table summary="What parted Changed" border="1"><colgroup><col align="center" class="c1"><col align="center" class="c2"><col align="center" class="c3"><col align="center" class="c4"></colgroup><thead><tr><th align="left"> </th><th align="left"><code class="filename">sda</code></th><th align="left"><code class="filename">disk1.raw</code></th><th align="left"><code class="filename">disk1.raw</code> (via <span class="command"><strong>parted</strong></span>)</th></tr></thead><tbody><tr><td align="left"><span class="command"><strong>file</strong></span></td><td align="left">block special</td><td align="left">data</td><td align="left">x86 boot sector</td></tr><tr><td align="left"><span class="command"><strong>stat</strong></span></td><td align="left">block special</td><td align="left">regular file</td><td align="left">regular file</td></tr><tr><td align="left"><span class="command"><strong>fdisk</strong></span></td><td align="left">has partition table</td><td align="left">no partition table</td><td align="left">valid partition table. unknown cylinder count</td></tr></tbody></table></div></div><br class="table-break"></div></div><div class="section" title="3. Devices and Partitions"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="VDG-Concepts-Devices-and-Partitions"></a>3. Devices and Partitions</h2></div></div></div><div class="section" title="3.1. Introduction"><div class="titlepage"><div><div><h3 class="title"><a name="VDG-Concepts-Devices-and-Partitions-Introduction"></a>3.1. Introduction</h3></div></div></div><p>
+    After using <span class="command"><strong>parted</strong></span>
+    <code class="filename">disk1.raw</code> has a partition table, but does
+    that mean we can create partitions on it now? Lets run
+    <span class="command"><strong>fdisk</strong></span> on <code class="filename">disk1.raw</code>.
+  </p><pre class="screen">
+&lt;tbielawa&gt;@(fridge)[~/images]
+$ fdisk disk1.raw
+You must set cylinders.
+You can do this from the extra functions menu.
+
+Command (m for help):</pre><p>
+    To calculate how many cylinders to specify you could work
+    backwards from <a class="xref" href="#VDG-Concepts-Capacity-Equation" title="Equation 2.2. Total Capacity of a Disk">Equation 2.2, “Total Capacity of a Disk”</a><sup>[<a name="idp619776" href="#ftn.idp619776" class="footnote">3</a>]</sup> but the number of unknowns at
+    this time make it prohibitively difficult for us to work out. It's
+    provided in this documentation as a general informative reference.
+  </p><div class="equation"><a name="VDG-Concepts-Capacity-Equation"></a><p class="title"><b>Equation 2.2. Total Capacity of a Disk</b></p><div class="equation-contents"><span class="mathphrase">
+      Disk Capacity = (cylinders/disk) * (heads/cylinder) *
+      (tracks/head) * (sectors/track) * (bytes/sector)
+    </span></div></div><br class="equation-break"><p>
+    A much simpler way to create partitions (still using
+    <span class="command"><strong>fdisk</strong></span>) is by is by accessing the file as if it
+    were an actual device. Doing this requires creating loop devices.
+  </p><p>
+    Instead of using <span class="command"><strong>fdisk</strong></span> on
+    <code class="filename">disk1.raw</code> directly, we'll create a loop
+    device and associate <code class="filename">disk1.raw</code> with it. From
+    here on we'll be accessing our virtual drives through loop
+    devices.
+  </p><p>
+    Why are we doing this? And what is a loop device?
+  </p><p>
+    Unfortunately for <code class="filename">disk1.raw</code>, it will never be
+    anything more than just a file. The operating just system doesn't
+    have interfaces for block operations against files. As the kernel
+    creates the block special device <code class="systemitem">/dev/sda</code> to represent my hard drive,
+    we need to create a block special device to represent our virtual
+    disk. This is called a loop device<sup>[<a name="idp628192" href="#ftn.idp628192" class="footnote">4</a>]</sup> You can think of a loop
+    device, e.g., <code class="systemitem">/dev/loop1</code>, like a translator.
+  </p><p>
+    With a loop device inserted between programs and our disk image we
+    can view and operate on the disk image as if it were a regular
+    drive. When accessed through a loop device
+    <span class="command"><strong>fdisk</strong></span> can properly determine the number of
+    cylinders, heads, and everything else required to create
+    partitions.
+  </p></div><div class="section" title="3.2. Creating a Loop Device"><div class="titlepage"><div><div><h3 class="title"><a name="VDG-Concepts-Creating-a-Loop-Device"></a>3.2. Creating a Loop Device</h3></div></div></div><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+      Since we'll be working with the kernel to create a device
+      you'll need to have super user permissions to
+      continue<sup>[<a name="idp637760" href="#ftn.idp637760" class="footnote">5</a>]</sup>.
+    </p></div><p>
+    To create a loop device. Run the <span class="command"><strong>losetup</strong></span>
+    command with the <code class="option">-f</code> option and an available loop
+    device will be selected automatically and associated with
+    <code class="filename">disk1.raw</code>.
+  </p><div class="example"><a name="VDG-Concepts-Example-Run-losetup"></a><p class="title"><b>Example 2.6. Creating a loop device with <span class="command">losetup</span></b></p><div class="example-contents"><pre class="screen">&lt;tbielawa&gt;@(fridge)[~/images]
+$ sudo losetup -f disk1.raw
+
+&lt;tbielawa&gt;@(fridge)[~/images]
+$ sudo losetup -a
+/dev/loop1: [0805]:151552 (/home/tbielawa/images/disk1.raw)</pre></div></div><br class="example-break"><p>
+    You can run <span class="command"><strong>file</strong></span>, <span class="command"><strong>stat</strong></span>, and
+    <span class="command"><strong>fdisk</strong></span> on <code class="filename">disk1.raw</code> to
+    verify that nothing has changed since we put a partition table on
+    it with <span class="command"><strong>parted</strong></span>.
+  </p></div><div class="section" title="3.3. Examine the loop device"><div class="titlepage"><div><div><h3 class="title"><a name="VDG-Concepts-Examine-the-Loop-Device"></a>3.3. Examine the loop device</h3></div></div></div><div class="example"><a name="VDG-Concepts-Example-Examine-the-Loop-Device-example"></a><p class="title"><b>Example 2.7. Examining the Loop Device</b></p><div class="example-contents"><pre class="screen">&lt;tbielawa&gt;@(fridge)[~/images]
+$ file /dev/loop0
+/dev/loop0: block special
+
+&lt;tbielawa&gt;@(fridge)[~/images]
+$ stat /dev/loop0
+  File: `/dev/loop0'
+  Size: 0               Blocks: 0          IO Block: 4096   block special file
+Device: 5h/5d   Inode: 5102        Links: 1     Device type: 7,0
+Access: (0660/brw-rw----)  Uid: (    0/    root)   Gid: (    6/    disk)
+Access: 2010-09-15 01:22:09.909721760 -0400
+Modify: 2010-09-12 11:03:19.351004598 -0400
+Change: 2010-09-12 11:03:24.694640781 -0400
+
+&lt;tbielawa&gt;@(fridge)[~/images]
+$ sudo fdisk -l /dev/loop0
+ Disk /dev/loop0: 1073 MB, 1073741824 bytes
+255 heads, 63 sectors/track, 130 cylinders
+Units = cylinders of 16065 * 512 = 8225280 bytes
+Disk identifier: 0x000e44e8
+
+      Device Boot      Start         End      Blocks   Id  System</pre></div></div><br class="example-break"><p>
+    Look back at <a class="xref" href="#VDG-Concepts-Regular-Drive" title="Example 2.1. Regular Disk Drive">Example 2.1, “Regular Disk Drive”</a>
+    where I ran these commands against my actual disk drive
+    (<code class="systemitem">/dev/sda</code>) and
+    you'll see the results are quite similar.
+  </p><div class="itemizedlist"><ul class="itemizedlist" type="disc"><li class="listitem"><p>
+        <span class="command"><strong>file</strong></span> detects <code class="systemitem">loop0</code> as a block special
+        device.
+      </p></li><li class="listitem"><p>
+        <span class="command"><strong>stat</strong></span> does too.
+      </p></li><li class="listitem"><p>
+        <span class="command"><strong>fdisk</strong></span> no longer says we need to set
+        the cylinders.
+      </p></li></ul></div><div class="table"><a name="VDG-Concepts-Example-Examine-the-Loop-Device"></a><p class="title"><b>Table 2.3. Examining the Loop Device</b></p><div class="table-contents"><table summary="Examining the Loop Device" border="1"><colgroup><col align="center" class="c1"><col align="center" class="c2"><col align="center" class="c3"><col align="center" class="c4"><col align="center" class="c5"></colgroup><thead><tr><th align="left"> </th><th align="left"><code class="filename">sda</code></th><th align="left"><code class="filename">disk1.raw</code></th><th align="left"><code class="filename">disk1.raw</code> (via <span class="command"><strong>parted</strong></span>)</th><th align="left"><code class="filename">/dev/loop0</code></th></tr></thead><tbody><tr><td align="left"><span class="command"><strong>file</strong></span></td><td align="left">block special</td><td align="left">data</td><td align="left">x86 boot sector</td><td align="left">block special</td></tr><tr><td align="left"><span class="command"><strong>stat</strong></span></td><td align="left">block special</td><td align="left">regular file</td><td align="left">regular file</td><td align="left">block special</td></tr><tr><td align="left"><span class="command"><strong>fdisk</strong></span></td><td align="left">has partition table</td><td align="left">no partition table</td><td align="left">valid partition table. unknown cylinder count</td><td align="left">valid partition table. unknown cylinder count</td></tr></tbody></table></div></div><br class="table-break"><p>
+    Our virtual disk is starting to look like a real hard drive
+    now!
+  </p><p>
+    To bring this section to a conclusion we'll create a
+    partition, format it with ext3, and then mount it for reading
+    and writing.
+  </p></div><div class="section" title="3.4. Creating partitions"><div class="titlepage"><div><div><h3 class="title"><a name="VDG-Concepts-Creating-Partitions"></a>3.4. Creating partitions</h3></div></div></div><p>
+    Open <code class="systemitem">/dev/loop0</code> (or
+    whatever loop device your disk was associated with) in
+    <span class="command"><strong>fdisk</strong></span> to create a partition.
+  </p><div class="example"><a name="VDG-Concepts-Example-Create-Partition"></a><p class="title"><b>Example 2.8. Creating a partition with <span class="command">fdisk</span></b></p><div class="example-contents"><pre class="screen">&lt;tbielawa&gt;@(fridge)[~/images]
+$ sudo fdisk /dev/loop0
+
+Command (m for help): n
+Command action
+   e   extended
+   p   primary partition (1-4)
+p
+Partition number (1-4): 1
+First cylinder (1-130, default 1):
+Using default value 1
+Last cylinder, +cylinders or +size{K,M,G} (1-130, default 130):
+Using default value 130
+
+Command (m for help): t
+Selected partition 1
+Hex code (type L to list codes): 83
+
+Command (m for help): w
+The partition table has been altered!
+
+Calling ioctl() to re-read partition table.
+
+WARNING: Re-reading the partition table failed with error 22: Invalid argument.
+The kernel still uses the old table. The new table will be used at
+the next reboot or after you run partprobe(8) or kpartx(8)
+Syncing disks.
+&lt;tbielawa&gt;@(fridge)[~/images]
+$ sudo fdisk -l /dev/loop0
+
+Disk /dev/loop0: 1073 MB, 1073741824 bytes
+255 heads, 63 sectors/track, 130 cylinders
+Units = cylinders of 16065 * 512 = 8225280 bytes
+Disk identifier: 0x000e44e8
+
+      Device Boot      Start         End      Blocks   Id  System
+/dev/loop0p1               1         130     1044193+  83  Linux</pre></div></div><br class="example-break"></div><div class="section" title="3.5. Formatting Partitions"><div class="titlepage"><div><div><h3 class="title"><a name="VDG-Concepts-Formatting-Partitions"></a>3.5. Formatting Partitions</h3></div></div></div><p>
+    Unlike <code class="systemitem">/dev/sda</code> we
+    can't just create a partition on the first <code class="systemitem">loop0</code> partition by addressing
+    it as <code class="systemitem">/dev/loop0</code>. This is because
+    the kernel has no device created to represent this. Instead
+    we'll have to create another device associated with a
+    specific offset in our device/file.
+  </p><p>
+    Why do we have to specify an offset? How do we know what
+    offset to specifically?
+  </p><p>
+    An "offset" just means how far from the beginning of a
+    device something is. We need to know this because we're
+    going to create a device mapped to the first partition
+    (Linux does this automatically for regular disks during the
+    boot process). Partitions don't start on the first block of
+    a device because filesystem information is stored there. To
+    specify the offset we just need to know what sector the
+    partition (<code class="systemitem">loop0p1</code>) starts
+    on. <span class="command"><strong>fdisk</strong></span> can give us this
+    information. (Spoiler: 9 times out of 10 the offset for the
+    first partition will be 512 * 63 = 32256).
+  </p><p>
+    Print the partition table using <span class="command"><strong>fdisk</strong></span>
+    with the <code class="option">-u</code> option to switch the printing
+    format to sectors instead of cylinders for units.
+  </p><pre class="screen">
+&lt;tbielawa&gt;@(fridge)[~/images]
+$ sudo fdisk -ul /dev/loop0
+
+Disk /dev/loop0: 1073 MB, 1073741824 bytes
+255 heads, 63 sectors/track, 130 cylinders, total 2097152 sectors
+Units = sectors of 1 * 512 = 512 bytes
+Disk identifier: 0x000e44e8
+
+      Device Boot      Start         End      Blocks   Id  System
+/dev/loop0p1              63     2088449     1044193+  83  Linux
+  </pre><p>
+    <code class="systemitem">/dev/loop0p1</code> is
+    our first partition and from the table above we know that it
+    starts on sector 63. Since we have to specify offsets in
+    bytes we multiply 63 by 512 (the default block size) to
+    obtain an offset of 32256 bytes.
+  </p><pre class="screen">
+&lt;tbielawa&gt;@(fridge)[~/images]
+$ sudo losetup -o 32256 -f /dev/loop0
+&lt;tbielawa&gt;@(fridge)[~/images]
+$ sudo losetup -a
+/dev/loop0: [0805]:151552 (/home/tbielawa/images/disk1.raw)
+/dev/loop1: [0005]:5102 (/dev/loop0), offset 32256
+  </pre><p>
+    Now that we have <code class="systemitem">/dev/loop1</code> representing
+    partition of our virtual disk we can create a filesystem on
+    it and finally mount it.
+  </p><div class="example"><a name="VDG-Concepts-Example-Partition-Formating"></a><p class="title"><b>Example 2.9. Formatting the partition</b></p><div class="example-contents"><pre class="screen">
+&lt;tbielawa&gt;@(fridge)[~/images]
+$ sudo mkfs -t ext3 /dev/loop1
+mke2fs 1.41.9 (22-Aug-2009)
+Filesystem label=
+OS type: Linux
+Block size=4096 (log=2)
+Fragment size=4096 (log=2)
+65536 inodes, 262136 blocks
+13106 blocks (5.00%) reserved for the super user
+First data block=0
+Maximum filesystem blocks=268435456
+8 block groups
+32768 blocks per group, 32768 fragments per group
+8192 inodes per group
+Superblock backups stored on blocks:
+        32768, 98304, 163840, 229376
+
+Writing inode tables: done
+Creating journal (4096 blocks): done
+Writing superblocks and filesystem accounting information: done
+
+This filesystem will be automatically checked every 25 mounts or
+180 days, whichever comes first.  Use tune2fs -c or -i to override.
+&lt;tbielawa&gt;@(fridge)[~/images]
+$ sudo losetup -d /dev/loop1
+&lt;tbielawa&gt;@(fridge)[~/images]
+$ sudo losetup -d /dev/loop0
+&lt;tbielawa&gt;@(fridge)[~/images]
+$ mkdir partition1
+&lt;tbielawa&gt;@(fridge)[~/images]
+$ sudo mount -t ext3 -o loop,offset=32256 disk1.raw partition1/
+&lt;tbielawa&gt;@(fridge)[~/images]
+$ mount | grep partition1
+/dev/loop0 on /home/tbielawa/images/partition1 type ext3 (rw,offset=32256)
+&lt;tbielawa&gt;@(fridge)[~/images]
+$ df -h partition1/
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/loop0           1008M   18M  940M   2% /home/tbielawa/images/partition1
+    </pre></div></div><br class="example-break"><div class="note" title="Note" style="margin-left: 0.5in; margin-right: 0.5in;"><h3 class="title">Note</h3><p>
+      The same procedure applies to any arbitrary partition:
+      obtain the starting sector, multiply by block size.
+    </p></div></div><div class="section" title="3.6. Cleaning Up"><div class="titlepage"><div><div><h3 class="title"><a name="VDG-Concepts-Cleaning-Up"></a>3.6. Cleaning Up</h3></div></div></div><p>
+    You can detach the loop device (while leaving your file
+    intact) by giving the <code class="option">-d</code> option to
+    <span class="command"><strong>losetup</strong></span>.
+  </p><div class="example"><a name="VDG-Concepts-Example-Detaching-a-loop-device"></a><p class="title"><b>Example 2.10. Detaching a loop device</b></p><div class="example-contents"><pre class="screen">
+&lt;tbielawa&gt;@(fridge)[~/images]
+$ sudo losetup -d /dev/loop1
+    </pre></div></div><br class="example-break"></div></div><div class="footnotes"><br><hr width="100" align="left"><div class="footnote"><p><sup>[<a id="ftn.idp525520" href="#idp525520" class="para">1</a>] </sup><a class="link" href="http://en.wikipedia.org/wiki/Caret_notation" target="_top">Caret
+      Notation</a> on Wikipedia</p></div><div class="footnote"><p><sup>[<a id="ftn.idp529616" href="#idp529616" class="para">2</a>] </sup><a class="link" href="http://en.wikipedia.org/wiki/Control_code" target="_top">Control
+    Characters</a> on Wikipedia</p></div><div class="footnote"><p><sup>[<a id="ftn.idp619776" href="#idp619776" class="para">3</a>] </sup><a class="link" href="http://www.rwc.uc.edu/koehler/comath/42.html" target="_top">Disk
+    Geometry</a></p></div><div class="footnote"><p><sup>[<a id="ftn.idp628192" href="#idp628192" class="para">4</a>] </sup> Don't confuse
+    the often misused term "loopback device" with a "loop device." In
+    networking a loopback device refers to a virtual interface used
+    for routing within a host. <code class="systemitem">localhost</code> is the standard hostname
+    given to the loopback address <code class="systemitem">127.0.0.1</code>. See <a class="link" href="http://tools.ietf.org/html/rfc1700" target="_top">rfc1700</a> for
+    additional information.</p></div><div class="footnote"><p><sup>[<a id="ftn.idp637760" href="#idp637760" class="para">5</a>] </sup><span class="package">FUSE</span>
+      (Filesystem in Userspace) has a module called <code class="systemitem">Mountlo</code> that allows
+      non-root users to make make loop
+      devices.</p></div></div></div><div class="chapter" title="Chapter 3. Advanced Operations"><div class="titlepage"><div><div><h2 class="title"><a name="VDI-Advanced"></a>Chapter 3. Advanced Operations</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="section"><a href="#VDI-Advanced-Creating-A-Mountable-Disk">1. Creating a Mountable Disk</a></span></dt><dt><span class="section"><a href="#VDI-Advanced-Cloning-A-Physical-Disk">2. Cloning a Physical Disk</a></span></dt></dl></div><div class="section" title="1. Creating a Mountable Disk"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="VDI-Advanced-Creating-A-Mountable-Disk"></a>1. Creating a Mountable Disk</h2></div></div></div><p>
+      In the previous section I went through creating a disk that you
+      can use as the boot disk for a virtual machine. In that example
+      it was expected that you would configure your virtualization
+      software to use that disk and then the operating system
+      installation would take care of creating the disk label and file
+      systems. In this section I'll show you the steps required to do
+      that by yourself.
+    </p></div><div class="section" title="2. Cloning a Physical Disk"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a name="VDI-Advanced-Cloning-A-Physical-Disk"></a>2. Cloning a Physical Disk</h2></div></div></div><div class="blockquote"><table border="0" width="100%" cellspacing="0" cellpadding="0" class="blockquote" summary="Block quote"><tr><td width="10%" valign="top"> </td><td width="80%" valign="top"><p> "Everything's a file"</p></td><td width="10%" valign="top"> </td></tr><tr><td width="10%" valign="top"> </td><td colspan="2" align="right" valign="top">--<span class="attribution"> Unknown </span></td></tr></table></div><p>
+      It is also possible to clone an existing physical hard disk
+      using the <span class="command"><strong>qemu-img</strong></span> <code class="option">convert</code>
+      option. This is possible in part due to the original philosophy
+      laid down by Dennis Ritchie and Ken Thompson when they first
+      created Unix that everything's treated as a file. The syntax for
+      the <code class="option">convert</code> option is below.
+    </p><pre class="programlisting">
+convert [-c] [-f fmt] [-O output_fmt] [-o options] filename [filename2 [...]] output_filename
+    </pre><p>
+      I never fully grasped the "everything's a file" concept until I
+      tried (expecting to fail) to use the <code class="option">convert</code>
+      option to create a virtual disk image of an actual hard
+      drive. This section explains how to do just that.
+    </p><div class="example"><a name="VDI-Advanced-Cloning-A-Physical-Disk-Example"></a><p class="title"><b>Example 3.1. Making a virtual disk from a physical disk</b></p><div class="example-contents"><pre class="programlisting">
+
+      </pre></div></div><br class="example-break"></div></div><div class="appendix" title="Appendix A. Appendices"><div class="titlepage"><div><div><h2 class="title"><a name="VDG-Appendix-Index"></a>Appendix A. Appendices</h2></div></div></div><div class="toc"><p><b>Table of Contents</b></p><dl><dt><span class="refentrytitle"><a href="#VDG-Appendix-Units">UNITS</a></span><span class="refpurpose"> — decimal and binary prefixes</span></dt></dl></div><div class="refentry" title="UNITS"><a name="VDG-Appendix-Units"></a><div class="titlepage"></div><div class="refnamediv"><a name="name"></a><h2>Name</h2><p>units, kilo, kibi, mega, mebi, giga, gibi — decimal and binary prefixes</p></div><div class="refsect1" title="DESCRIPTION"><a name="description"></a><h2>DESCRIPTION</h2><div class="refsect2" title="Binary prefixes"><a name="binary_prefixes"></a><h3>Binary prefixes</h3><p>
+        The binary prefixes resemble the decimal ones, but have an
+        additional 'i' (and "Ki" starts with a capital 'K').  The names
+        are formed by taking the first syllable of the names of the
+        decimal prefix with roughly the same size, followed by "bi" for
+        "binary".
+      </p><div class="table"><a name="idp469520"></a><p class="title"><b>Table A.1. Binary Preflixes</b></p><div class="table-contents"><table summary="Binary Preflixes" border="1"><colgroup><col align="center" class="c1"><col align="center" class="c2"><col align="center" class="c3"></colgroup><tbody><tr><td align="left">Prefix</td><td align="left">Name</td><td align="left">Value</td></tr><tr><td align="left">Ki</td><td align="left">kibi</td><td align="left">2<sup>10</sup> = 1024</td></tr><tr><td align="left">Mi</td><td align="left">mebi</td><td align="left">2<sup>20</sup> = 1048576</td></tr><tr><td align="left">Gi</td><td align="left">gibi</td><td align="left">2<sup>30</sup> = 1073741824</td></tr><tr><td align="left">Ti</td><td align="left">tebi</td><td align="left">2<sup>40</sup> = 1099511627776</td></tr><tr><td align="left">Pi</td><td align="left">pebi</td><td align="left">2<sup>50</sup> = 1125899906842624</td></tr><tr><td align="left">Ei</td><td align="left">exbi</td><td align="left">2<sup>60</sup> = 1152921504606846976</td></tr></tbody></table></div></div><br class="table-break"><p>
+        See also: <a class="ulink" href="http://physics.nist.gov/cuu/Units/binary.html" target="_top">http://physics.nist.gov/cuu/Units/binary.html</a>
+      </p></div><div class="refsect2" title="Discussion"><a name="discussion"></a><h3>Discussion</h3><p>
+        Before these binary prefixes were introduced, it was fairly
+        common to use k=1000 and K=1024, just like b=bit, B=byte.
+        Unfortunately, the M is capital already, and cannot be
+        capitalized to indicate binary-ness.
+      </p><p>
+        At first that didn't matter too much, since memory modules and
+        disks came in sizes that were powers of two, so everyone knew
+        that in such contexts "kilobyte" and "megabyte" meant 1024 and
+        1048576 bytes, respectively.  What originally was a sloppy use
+        of the prefixes "kilo" and "mega" started to become regarded as
+        the "real true meaning" when computers were involved.  But then
+        disk technology changed, and disk sizes became arbitrary
+        numbers.  After a period of uncertainty all disk manufacturers
+        settled on the standard, namely k=1000, M=1000k, G=1000M.
+      </p><p>
+        The situation was messy: in the 14k4 modems, k=1000; in the
+        1.44MB diskettes, M=1024000; etc. In 1998 the IEC approved the
+        standard that defines the binary prefixes given above, enabling
+        people to be precise and unambiguous.
+      </p><p>
+        Thus, today, MB = 1000000B and MiB = 1048576B.
+      </p><p>
+        In the free software world programs are slowly being changed to
+        conform. When the Linux kernel boots and says:
+      </p><pre class="screen">
+        hda: 120064896 sectors (61473 MB) w/2048KiB Cache
+      </pre><p>
+        the MB are megabytes and the KiB are kibibytes.
+      </p></div></div></div></div></div></body></html>

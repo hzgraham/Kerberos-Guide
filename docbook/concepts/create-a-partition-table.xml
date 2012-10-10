@@ -1,0 +1,105 @@
+<section xml:id="VDG-Concepts-Create-a-Partition-Table"
+	 xmlns="http://docbook.org/ns/docbook"
+	 xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <title>Create a Partition Table</title>
+
+  <para>
+    Use GNU <command>parted</command> to put a valid partition table
+    on the image file.
+  </para>
+
+  <example xml:id="VDG-Concepts-Example-Create-a-Partition-Table">
+    <title>Create a Partition Table</title>
+
+    <screen><xi:include href="../examples/concepts-create-a-partition-table01" parse="text"/></screen>
+  </example>
+
+  <para>
+    Lets examine the image again to see how the operating system
+    thinks it has changed.
+  </para>
+
+  <example xml:id="VDG-Concepts-Example-Create-a-Partition-Table-Changes">
+    <title>Overview - What Changed </title>
+
+    <screen><xi:include href="../examples/concepts-create-a-partition-table02" parse="text"/></screen>
+  </example>
+
+  <itemizedlist>
+    <listitem>
+      <para>
+	Now when we run <command>file</command> instead of "data"
+	<command>file</command> thinks it is an x86 boot sector. That
+	sounds pretty accurate since we just put a partition table on
+	it.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <command>stat</command> still thinks it's a regular file (as
+        opposed to a block special device, or a socket, etc...).
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <command>fdisk</command> was able to find a partition table in
+        that boot sector that <command>file</command> found.
+      </para>
+    </listitem>
+  </itemizedlist>
+
+  <table pgwide='0' frame='all' xml:id="VDG-Concepts-Create-A-Partition-Table-What-Changed">
+    <title>What <command>parted</command> Changed</title>
+    <tgroup cols='4' align='center'>
+      <colspec colname='c1'/>
+      <colspec colname='c2'/>
+      <colspec colname='c3'/>
+      <colspec colname='c4'/>
+      <thead>
+        <row>
+          <entry align='left'></entry>
+          <entry align='left'><filename class='devicefile'>sda</filename></entry>
+          <entry align='left'><filename>disk1.raw</filename></entry>
+          <entry align='left'><filename>disk1.raw</filename> (via <command>parted</command>)</entry>
+        </row>
+      </thead>
+      <tbody>
+        <row>
+          <entry align='left'><command>file</command></entry>
+          <entry align='left'>block special</entry>
+          <entry align='left'>data</entry>
+          <entry align='left'>x86 boot sector</entry>
+        </row>
+        <row>
+          <entry align='left'><command>stat</command></entry>
+          <entry align='left'>block special</entry>
+          <entry align='left'>regular file</entry>
+          <entry align='left'>regular file</entry>
+        </row>
+        <row>
+          <entry align='left'><command>fdisk</command></entry>
+          <entry align='left'>has partition table</entry>
+          <entry align='left'>no partition table</entry>
+          <entry align='left'>valid partition table. unknown cylinder count</entry>
+        </row>
+      </tbody>
+    </tgroup>
+  </table>
+
+
+
+  <!-- <example xml:id="VDG-Concepts-Example-Create-a-Partition-Table-Changes-example"> -->
+  <!--   <title>What <command>parted</command> Changed</title> -->
+
+
+  <!--   <screen> -->
+
+  <!--         |     sda       |     disk1.raw     | disk1.raw (parted) | -->
+  <!--   file  | block special |   data            |   x86 boot sector  | -->
+  <!--   stat  | block special |   regular file    |   regular file     | -->
+  <!--   fdisk | Has partition |   no partition    |   valid partition  | -->
+  <!--         |  table        |    table          |    table. Unknown  | -->
+  <!--   </screen> -->
+  <!-- </example> -->
+</section>

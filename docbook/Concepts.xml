@@ -1,0 +1,30 @@
+<chapter xmlns="http://docbook.org/ns/docbook"
+	 xmlns:xl="http://www.w3.org/1999/xlink"
+	 xmlns:xi="http://www.w3.org/2001/XInclude"
+	 xml:id="VDG-Concepts" version="5.0">
+
+  <title>Disk Concepts</title>
+
+  <xi:include href="concepts/introduction.xml"/>
+
+
+  <section xml:id="VDG-Concepts-Creation">
+    <title>Learning by doing (Creating a 1GiB virtual disk from scratch)</title>
+
+    <xi:include href="concepts/background-on-the-dd-command.xml"/>
+    <xi:include href="concepts/running-dd.xml"/>
+    <xi:include href="concepts/examining-the-created-file.xml"/>
+    <xi:include href="concepts/create-a-partition-table.xml"/>
+  </section>
+
+  <section xml:id="VDG-Concepts-Devices-and-Partitions">
+    <title>Devices and Partitions</title>
+
+    <xi:include href="concepts/devices-and-partitions-introduction.xml"/>
+    <xi:include href="concepts/creating-a-loop-device.xml"/>
+    <xi:include href="concepts/examine-the-loop-device.xml"/>
+    <xi:include href="concepts/creating-partitions.xml"/>
+    <xi:include href="concepts/formatting-partitions.xml"/>
+    <xi:include href="concepts/cleaning-up.xml"/>
+  </section>
+</chapter>

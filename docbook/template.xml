@@ -1,0 +1,13 @@
+<section xml:id="VDG-Concepts-"
+	 xmlns="http://docbook.org/ns/docbook"
+	 xmlns:xi="http://www.w3.org/2001/XInclude">
+
+
+
+  <example xml:id="VDG-Concepts-">
+    <title></title>
+
+    <screen><xi:include href="../examples/concepts-" parse="text"/></screen>
+  </example>
+
+</section>
