@@ -7,7 +7,7 @@
 
   <para>
     This chapter is going to provide basic descriptions and installation
-    instructions for setting up a Kerberos server on Ubuntu Linux. You will 
+    instructions for setting up a Kerberos server on <b>Ubuntu</b> Linux. You will 
     need to be able to run <command>sudo apt-get install</command> to install
     the required packages.
   </para>
@@ -36,13 +36,37 @@
     </programlisting>
   </para>
 
-  <para>
-    When installing on a virtual machine you will need to generate some
-    random entropy with is needed for the 'krb5_newrealm' command.
-    <programlisting>
-      # echo "HRNGDEVICE=/dev/urandom" >> /etc/default/rng-tools
-      # /etc/init.d/rng-tools start
-    </programlisting>
-  </para>
+  <procedure xml:id="Kerberos-Realm-Creation">
+    <title>Setting up the Realm</title>
+    <step>
+      <para>
+	When installing on a virtual machine you will need to generate some
+	random entropy with is needed for the 'krb5_newrealm' command.
+	<programlisting>
+	  # echo "HRNGDEVICE=/dev/urandom" >> /etc/default/rng-tools
+	  # /etc/init.d/rng-tools start
+	</programlisting>
+      </para>
+    </step>
 
+    <step>
+      <para>
+	Now that we are generating some random data we can set up the new Kerberos realm.
+	<programlisting>
+	  # krb5_newrealm
+	</programlisting>
+      </para>
+    </step>
+
+    <step>
+      <para>
+	Finally restart the Kerberos services:
+	<programlisting>
+	  # service krb5-kdc restart
+	  # service krb5-admin-server restart
+	</programlisting>
+      </para>
+    </step>
+
+  </procedure>
 </section>
